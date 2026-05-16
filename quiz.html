@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Interactive Math Quiz Game</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      background: linear-gradient(135deg, #0f172a, #1e293b, #0f172a);
+      overflow-x: hidden;
+      position: relative;
+      color: white;
+    }
+
+    /* Math Background */
+    body::before {
+      content: "∑  π  √  x²  y=mx+c  ∆  ∫  cosθ  sinθ  a²+b²=c²  f(x)  θ  3x+2  graph  circle  triangle";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      font-size: 32px;
+      color: rgba(255,255,255,0.05);
+      line-height: 90px;
+      word-spacing: 40px;
+      z-index: 0;
+      animation: moveBg 30s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes moveBg {
+      0% {
+        transform: translateY(0);
+      }
+      100% {
+        transform: translateY(-200px);
+      }
+    }
+
+    .quiz-container {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 850px;
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(12px);
+      border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 0 30px rgba(0,0,0,0.5);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 38px;
+      color: #38bdf8;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .question-box {
+      margin-bottom: 25px;
+    }
+
+    .question-number {
+      color: #facc15;
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    .question {
+      font-size: 24px;
+      margin-bottom: 20px;
+      line-height: 1.4;
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .option {
+      background: rgba(255,255,255,0.1);
+      padding: 15px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: 0.3s;
+      border: 2px solid transparent;
+    }
+
+    .option:hover {
+      background: rgba(56,189,248,0.25);
+      transform: scale(1.02);
+    }
+
+    .selected {
+      border: 2px solid #38bdf8;
+      background: rgba(56,189,248,0.25);
+    }
+
+    .buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 25px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+      font-weight: bold;
+    }
+
+    .next-btn {
+      background: #22c55e;
+      color: white;
+    }
+
+    .next-btn:hover {
+      background: #16a34a;
+    }
+
+    .refresh-btn {
+      background: #f97316;
+      color: white;
+    }
+
+    .refresh-btn:hover {
+      background: #ea580c;
+    }
+
+    .shuffle-btn {
+      background: #a855f7;
+      color: white;
+    }
+
+    .shuffle-btn:hover {
+      background: #9333ea;
+    }
+
+    .result-box {
+      text-align: center;
+      padding: 30px;
+    }
+
+    .score {
+      font-size: 36px;
+      color: #22c55e;
+      margin: 20px 0;
+    }
+
+    .restart-btn {
+      background: #38bdf8;
+      color: white;
+      margin-top: 20px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 14px;
+      border-radius: 10px;
+      border: none;
+      outline: none;
+      font-size: 18px;
+      background: rgba(255,255,255,0.15);
+      color: white;
+    }
+
+    label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .type-badge {
+      background: #334155;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #facc15;
+    }
+
+    @media (max-width: 600px) {
+      .question {
+        font-size: 20px;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="quiz-container">
+  <h1>🧠 Interactive Math Quiz Game</h1>
+
+  <div class="top-bar">
+    <div id="setName"></div>
+    <div class="type-badge" id="questionType"></div>
+  </div>
+
+  <div id="quizBox"></div>
+</div>
+
+<script>
+  const questionSets = [
+    [
+      {
+        type: "single",
+        question: "What is the value of 7 × 8?",
+        options: ["54", "56", "64", "58"],
+        answer: "56"
+      },
+      {
+        type: "multi",
+        question: "Select all prime numbers.",
+        options: ["2", "4", "5", "9"],
+        answer: ["2", "5"]
+      },
+      {
+        type: "fill",
+        question: "Solve: 15 + 9 = ?",
+        answer: "24"
+      },
+      {
+        type: "single",
+        question: "What is the square root of 144?",
+        options: ["10", "11", "12", "13"],
+        answer: "12"
+      },
+      {
+        type: "single",
+        question: "Which shape has 3 sides?",
+        options: ["Square", "Triangle", "Circle", "Rectangle"],
+        answer: "Triangle"
+      },
+      {
+        type: "fill",
+        question: "What is 100 ÷ 4?",
+        answer: "25"
+      },
+      {
+        type: "multi",
+        question: "Select even numbers.",
+        options: ["11", "14", "20", "7"],
+        answer: ["14", "20"]
+      },
+      {
+        type: "single",
+        question: "Area formula of a circle?",
+        options: ["πr²", "2πr", "l×b", "a²"],
+        answer: "πr²"
+      },
+      {
+        type: "fill",
+        question: "What is 9²?",
+        answer: "81"
+      },
+      {
+        type: "single",
+        question: "How many degrees in a right angle?",
+        options: ["45", "90", "180", "360"],
+        answer: "90"
+      }
+    ],
+
+    [
+      {
+        type: "single",
+        question: "What is 25% of 200?",
+        options: ["25", "50", "75", "100"],
+        answer: "50"
+      },
+      {
+        type: "fill",
+        question: "Solve: 13 × 6 = ?",
+        answer: "78"
+      },
+      {
+        type: "multi",
+        question: "Select all multiples of 3.",
+        options: ["6", "8", "9", "10"],
+        answer: ["6", "9"]
+      },
+      {
+        type: "single",
+        question: "Perimeter of a square formula?",
+        options: ["4a", "a²", "2a", "a³"],
+        answer: "4a"
+      },
+      {
+        type: "fill",
+        question: "What is 50 - 18?",
+        answer: "32"
+      },
+      {
+        type: "single",
+        question: "Which graph represents a straight line?",
+        options: ["Linear", "Pie", "Bar", "Circle"],
+        answer: "Linear"
+      },
+      {
+        type: "multi",
+        question: "Select all geometric shapes.",
+        options: ["Triangle", "Cube", "Apple", "Circle"],
+        answer: ["Triangle", "Cube", "Circle"]
+      },
+      {
+        type: "single",
+        question: "What is 10³?",
+        options: ["100", "1000", "10", "10000"],
+        answer: "1000"
+      },
+      {
+        type: "fill",
+        question: "Solve: 81 ÷ 9 = ?",
+        answer: "9"
+      },
+      {
+        type: "single",
+        question: "How many sides does a hexagon have?",
+        options: ["5", "6", "7", "8"],
+        answer: "6"
+      }
+    ],
+
+    [
+      {
+        type: "single",
+        question: "What is the value of π approximately?",
+        options: ["2.14", "3.14", "4.14", "5.14"],
+        answer: "3.14"
+      },
+      {
+        type: "fill",
+        question: "Solve: 45 + 55 = ?",
+        answer: "100"
+      },
+      {
+        type: "multi",
+        question: "Select all odd numbers.",
+        options: ["2", "3", "5", "8"],
+        answer: ["3", "5"]
+      },
+      {
+        type: "single",
+        question: "What is the formula of slope?",
+        options: ["y2-y1/x2-x1", "a²+b²", "πr²", "2πr"],
+        answer: "y2-y1/x2-x1"
+      },
+      {
+        type: "fill",
+        question: "What is 11 × 11?",
+        answer: "121"
+      },
+      {
+        type: "single",
+        question: "Which shape has no sides?",
+        options: ["Circle", "Square", "Triangle", "Pentagon"],
+        answer: "Circle"
+      },
+      {
+        type: "multi",
+        question: "Select all fractions.",
+        options: ["1/2", "3/4", "5", "9"],
+        answer: ["1/2", "3/4"]
+      },
+      {
+        type: "single",
+        question: "What is 14 + 28?",
+        options: ["32", "42", "52", "48"],
+        answer: "42"
+      },
+      {
+        type: "fill",
+        question: "What is the cube of 3?",
+        answer: "27"
+      },
+      {
+        type: "single",
+        question: "Which angle is greater than 90°?",
+        options: ["Acute", "Right", "Obtuse", "Straight"],
+        answer: "Obtuse"
+      }
+    ]
+  ];
+
+  let currentSetIndex = Math.floor(Math.random() * questionSets.length);
+  let questions = [...questionSets[currentSetIndex]];
+  let currentQuestion = 0;
+  let score = 0;
+  let selectedAnswer = null;
+
+  const quizBox = document.getElementById("quizBox");
+  const setName = document.getElementById("setName");
+  const questionType = document.getElementById("questionType");
+
+  function shuffleArray(array) {
+    return array.sort(() => Math.random() - 0.5);
+  }
+
+  function loadQuestion() {
+    selectedAnswer = null;
+
+    const q = questions[currentQuestion];
+
+    setName.innerHTML = `📘 Question Set ${currentSetIndex + 1}`;
+    questionType.innerHTML = `Type: ${q.type.toUpperCase()}`;
+
+    let html = `
+      <div class="question-box">
+        <div class="question-number">Question ${currentQuestion + 1} / ${questions.length}</div>
+        <div class="question">${q.question}</div>
+    `;
+
+    if (q.type === "single") {
+      html += `<div class="options">`;
+
+      q.options.forEach(option => {
+        html += `
+          <div class="option" onclick="selectSingle(this, '${option}')">
+            ${option}
+          </div>
+        `;
+      });
+
+      html += `</div>`;
+    }
+
+    else if (q.type === "multi") {
+      html += `<div class="options">`;
+
+      q.options.forEach(option => {
+        html += `
+          <label class="option">
+            <input type="checkbox" value="${option}" onchange="selectMulti()">
+            ${option}
+          </label>
+        `;
+      });
+
+      html += `</div>`;
+    }
+
+    else if (q.type === "fill") {
+      html += `
+        <input type="text" id="fillInput" placeholder="Type your answer here...">
+      `;
+    }
+
+    html += `
+      <div class="buttons">
+        <button class="next-btn" onclick="nextQuestion()">Next Question</button>
+        <button class="shuffle-btn" onclick="shuffleQuestions()">Shuffle Questions</button>
+        <button class="refresh-btn" onclick="refreshQuiz()">Refresh New Set</button>
+      </div>
+    `;
+
+    html += `</div>`;
+
+    quizBox.innerHTML = html;
+  }
+
+  function selectSingle(element, answer) {
+    document.querySelectorAll('.option').forEach(opt => {
+      opt.classList.remove('selected');
+    });
+
+    element.classList.add('selected');
+    selectedAnswer = answer;
+  }
+
+  function selectMulti() {
+    const checked = document.querySelectorAll('input[type="checkbox"]:checked');
+    selectedAnswer = Array.from(checked).map(c => c.value);
+  }
+
+  function checkAnswer() {
+    const q = questions[currentQuestion];
+
+    if (q.type === "fill") {
+      selectedAnswer = document.getElementById("fillInput").value.trim();
+    }
+
+    if (q.type === "multi") {
+      const correct = [...q.answer].sort().join(',');
+      const user = [...(selectedAnswer || [])].sort().join(',');
+
+      if (correct === user) {
+        score++;
+      }
+    }
+
+    else {
+      if (selectedAnswer == q.answer) {
+        score++;
+      }
+    }
+  }
+
+  function nextQuestion() {
+    checkAnswer();
+
+    currentQuestion++;
+
+    if (currentQuestion < questions.length) {
+      loadQuestion();
+    }
+
+    else {
+      showResult();
+    }
+  }
+
+  function showResult() {
+    quizBox.innerHTML = `
+      <div class="result-box">
+        <h2>🎉 Quiz Completed!</h2>
+        <div class="score">Your Score: ${score} / ${questions.length}</div>
+        <p>You answered all questions successfully.</p>
+
+        <div class="buttons">
+          <button class="restart-btn" onclick="refreshQuiz()">Load New Question Set</button>
+          <button class="shuffle-btn" onclick="shuffleQuestions()">Shuffle Again</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function refreshQuiz() {
+    let newIndex;
+
+    do {
+      newIndex = Math.floor(Math.random() * questionSets.length);
+    }
+    while (newIndex === currentSetIndex);
+
+    currentSetIndex = newIndex;
+
+    questions = [...questionSets[currentSetIndex]];
+
+    currentQuestion = 0;
+    score = 0;
+
+    loadQuestion();
+  }
+
+  function shuffleQuestions() {
+    questions = shuffleArray(questions);
+    currentQuestion = 0;
+    score = 0;
+
+    loadQuestion();
+  }
+
+  loadQuestion();
+</script>
+
+</body>
+</html>
